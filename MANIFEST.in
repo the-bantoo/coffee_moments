@@ -1,0 +1,18 @@
+include MANIFEST.in
+include requirements.txt
+include *.json
+include *.md
+include *.py
+include *.txt
+recursive-include coffee_moments *.css
+recursive-include coffee_moments *.csv
+recursive-include coffee_moments *.html
+recursive-include coffee_moments *.ico
+recursive-include coffee_moments *.js
+recursive-include coffee_moments *.json
+recursive-include coffee_moments *.md
+recursive-include coffee_moments *.png
+recursive-include coffee_moments *.py
+recursive-include coffee_moments *.svg
+recursive-include coffee_moments *.txt
+recursive-exclude coffee_moments *.pyc
