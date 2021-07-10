@@ -36,13 +36,8 @@ def execute(filters=None):
 
 	actual_qty = stock_value = 0
 
-
-	###stock bal
-
 	iwb_map = get_item_warehouse_map(filters, slee)
 	item_map = get_item_details2(items, slee, filters)
-
-	#item_map = item_details
 
 	data2 = {}
 	conversion_factors = {}
@@ -58,12 +53,7 @@ def execute(filters=None):
 				'warehouse': warehouse,
 				'company': company,
 			}
-			#report_data.update(item_map[item])
 			report_data.update(qty_dict)
-
-			#data2.append(report_data)
-	
-	###stock bal
 
 	available_serial_nos = {}
 	for sle in sl_entries:
@@ -91,13 +81,6 @@ def execute(filters=None):
 			"bal_qty": report_data[(sle.company, sle.item_code, sle.warehouse)].bal_qty,
 			"bal_val": report_data[(sle.company, sle.item_code, sle.warehouse)].bal_val
 		})
-
-		
-		#frappe.errprint(str( report_data[(sle.company, sle.item_code, sle.warehouse)].bal_val ))
-			
-
-
-		# new columns
 		
 		for price in prices:
 			if price.item_code == sle.item_code:
@@ -107,26 +90,9 @@ def execute(filters=None):
 	
 
 		if sle.serial_no:
-			update_available_serial_nos(available_serial_nos, sle)
-		
-		"""
-		frappe.errprint("item " + sle.item_code + " " + str(item_map[(sle.company, sle.item_code, sle.warehouse)]))
-
-		if sle.item_code in item_map[sle.item_code]:
-			frappe.errprint("sle.get(item) " + str(item) + " get  " + str(sle.get(item)))
-
-			if sle.get(item):
-				qty_dict = item_map[(company, item, warehouse)]
-				sle.update(qty_dict)
-				frappe.errprint("d " + str(qty_dict))
-		"""
-				
+			update_available_serial_nos(available_serial_nos, sle)				
 		data.append(sle)
 			
-
-		# frappe.errprint("after " + str(sle))
-		
-		#break
 		if include_uom:
 			conversion_factors.append(item_detail.conversion_factor)
 		
@@ -260,90 +226,6 @@ def get_item_warehouse_map(filters, sle):
 	iwb_map = filter_items_with_no_transactions(iwb_map, float_precision)
 
 	return iwb_map
-
-
-"""def get_item_details(items, sle, filters):
-	item_details = {}
-	if not items:
-		items = list(set(d.item_code for d in sle))
-
-	if not items:
-		return item_details
-
-	cf_field = cf_join = ""
-	if filters.get("include_uom"):
-		cf_field = ", ucd.conversion_factor"
-		cf_join = "left join `tabUOM Conversion Detail` ucd on ucd.parent=item.name and ucd.uom=%s" \
-			% frappe.db.escape(filters.get("include_uom"))
-
-	res = frappe.db.sql(""
-		select
-			item.name, item.item_name, item.description, item.item_group, item.brand, item.stock_uom %s
-		from
-			`tabItem` item
-			%s
-		where
-			item.name in (%s)
-	"" % (cf_field, cf_join, ','.join(['%s'] *len(items))), items, as_dict=1)
-
-	for item in res:
-		item_details.setdefault(item.name, item)
-
-	if filters.get('show_variant_attributes', 0) == 1:
-		variant_values = get_variant_values_for(list(item_details))
-		item_details = {k: v.update(variant_values.get(k, {})) for k, v in iteritems(item_details)}
-
-	return item_details"""
-
-"""
-def get_item_warehouse_map(filters, sle):
-	iwb_map = {}
-	from_date = getdate(filters.get("from_date"))
-	to_date = getdate(filters.get("to_date"))
-
-	float_precision = cint(frappe.db.get_default("float_precision")) or 3
-
-	for d in sle:
-		ddate = datetime.datetime.strptime(d.date, "%Y-%m-%d %H:%M:%S.%f").date()
-		key = (d.company, d.item_code, d.warehouse)
-		if key not in iwb_map:
-			iwb_map[key] = frappe._dict({
-				"opening_qty": 0.0, "opening_val": 0.0,
-				"in_qty": 0.0, "in_val": 0.0,
-				"out_qty": 0.0, "out_val": 0.0,
-				"bal_qty": 0.0, "bal_val": 0.0,
-				"val_rate": 0.0
-			})
-
-		qty_dict = iwb_map[(d.company, d.item_code, d.warehouse)]
-
-		if d.voucher_type == "Stock Reconciliation" and not d.batch_no:
-			qty_diff = flt(d.qty_after_transaction) - flt(qty_dict.bal_qty)
-		else:
-			qty_diff = flt(d.actual_qty)
-
-		value_diff = flt(d.stock_value_difference)
-
-		if ddate < from_date:
-			qty_dict.opening_qty += qty_diff
-			qty_dict.opening_val += value_diff
-
-		elif ddate >= from_date and ddate <= to_date:
-			if flt(qty_diff, float_precision) >= 0:
-				qty_dict.in_qty += qty_diff
-				qty_dict.in_val += value_diff
-			else:
-				qty_dict.out_qty += abs(qty_diff)
-				qty_dict.out_val += abs(value_diff)
-
-		qty_dict.val_rate = d.valuation_rate
-		qty_dict.bal_qty += qty_diff
-		qty_dict.bal_val += value_diff
-
-	iwb_map = filter_items_with_no_transactions(iwb_map, float_precision)
-
-	return iwb_map
-"""
 
 def filter_items_with_no_transactions(iwb_map, float_precision):
 	for (company, item, warehouse) in sorted(iwb_map):
